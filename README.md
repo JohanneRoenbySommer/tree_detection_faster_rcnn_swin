@@ -8,6 +8,5 @@ This is the official repository for the paper *Automatic Urban Street Tree Detec
 - **utils:** The file containing the main functions used in the project. 
 - **dataset_creation:** Files for cleaning the tree inventory, extracting the street views, and annotating the street views.
 - **exploratory_analysis:** Exploratory analysis of both the trees in the tree inventory and the annotated trees in images, and of the Faster R-CNN.
-- **train:** The file used to train the Faster R-CNN with Swin Transformer and to fine-tune it to Pasadena Urban Trees.
-- **models:** Trained models, both the original and the fine-tuned.
+- **train:** File to train the Faster R-CNN with Swin Transformer and to fine-tune it to Pasadena Urban Trees.
 - **test:** Files for predicting bounding boxes in images and making final predictions on the Copenhagen and Pasadena datasets and for evaluating both.
