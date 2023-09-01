@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Code from https://github.com/cplusx/google-street-view-panorama-download/blob/master/streetview.py
-
-"""
-Original code is from https://github.com/robolyst/streetview
-Functions added in this file are
-download_panorama_v1, download_panorama_v2, download_panorama_v3
-"""
-
 import os
 import pandas as pd
 import json
@@ -17,12 +7,13 @@ from datetime import datetime
 import requests
 from PIL import Image
 from io import BytesIO
-
 import sys
 sys.path.insert(1, f'{sys.path[0]}/..')
-from utils import haversine_distance
+from utils.utils import haversine_distance
 
 def get_panoids(lat, lng):
+    # Get closest pano to (lat, lng)
+
     # Get all close panos
     url = f'https://maps.googleapis.com/maps/api/js/GeoPhotoService.SingleImageSearch?pb=!1m5!1sapiv3!5sUS!11m2!1m1!1b0!2m4!1m2!3d{lat}!4d{lng}!2d50!3m10!2m2!1sen!2sGB!9m1!1e2!11m4!1m3!1e2!2b1!3e2!4m10!1e1!1e2!1e3!1e4!1e8!1e6!5m1!1e2!6m1!1e2&callback=_xdc_._v2mub5'
     resp = requests.get(url, proxies=None)
@@ -55,7 +46,7 @@ def get_panoids(lat, lng):
     return panos_ids_sorted
 
 def get_pano_info(pano_id, pano_id_recent=None):
-    # Code from https://github.com/gladcolor/StreetView
+    # Get info about newest panoramas from location of panorama with pano_id
 
     pano_info_dict = None
     pano_infos = []
@@ -132,29 +123,16 @@ def get_pano_info(pano_id, pano_id_recent=None):
 
     return pano_info_dict
 
-
 def get_tiles_info(panoid, zoom=5):
-    """
-    Generate a list of a panorama's tiles and their position.
-
-    The format is (x, y, filename, fileurl)
-    """
+    # Get a list of panorama tiles belonging to the panoid and their location
     image_url = "https://cbk0.google.com/cbk?output=tile&panoid={}&zoom={}&x={}&y={}"
-    coord = list(itertools.product(range(32), range(16)))
-    tiles = [(x, y, "%s_%dx%d.jpg" % (panoid, x, y), image_url.format(panoid, zoom, x, y)) for x, y in coord]
+    coords = list(itertools.product(range(32), range(16)))
+    tiles = [(x, y, "%s_%dx%d.jpg" % (panoid, x, y), image_url.format(panoid, zoom, x, y)) for x, y in coords]
 
     return tiles
 
 def download_panorama(panoid, img_size, zoom=5):
-    '''
-    v3: save image information in a buffer. (v2: save image to dist then read)
-    input:
-        panoid: which is an id of image on google maps
-        zoom: larger number -> higher resolution, from 1 to 5, better less than 3, some location will fail when zoom larger than 3
-        disp: verbose of downloading progress, basically you don't need it
-    output:
-        panorama image (uncropped)
-    '''
+    # Download panorama image of panoid
 
     # Get information on tiles needed to create the panorama image
     tiles_info = get_tiles_info(panoid, zoom=zoom)
@@ -188,7 +166,8 @@ def download_panorama(panoid, img_size, zoom=5):
         panorama = Image.new('RGB', (img_w, img_h))
         i = 0
         for x, y, fname, url in tiles_info:
-            if x*tile_width < img_w and y*tile_height < img_h: # tile is valid
+            is_valid_tile = x*tile_width < img_w and y*tile_height < img_h
+            if is_valid_tile:
                 tile = valid_tiles[i]
                 i+=1
                 panorama.paste(im=tile, box=(x*tile_width, y*tile_height))
@@ -210,7 +189,7 @@ with open(f'{data_path}/raw/panos_{zoom}.json', 'r') as fp:
 pano_ids_added = panos.keys()
 
 # Get panos that have already been downloaded
-streetview_path = f'{data_path}/images/streetview_{zoom}'
+streetview_path = f'{data_path}/images/streetviews'
 pano_ids_loaded = set(file_name.split('.')[0] for file_name in os.listdir(streetview_path))
 
 # Iterate trees
@@ -228,8 +207,8 @@ for idx, data in trees.iloc[14824:].iterrows():
         pano_added, pano_loaded = False, False
         pano_id = pano_ids[0]
 
-        # Get pano_info for newest tree from that location
-        # (might not return same pano_id)
+        # Get pano_info for newest images from that location
+        # (might not return same pano_id as given as input)
         pano_info = get_pano_info(pano_id, pano_id_added)
         if pano_info:
             pano_id = pano_info['Location']['panoId']

@@ -37,7 +37,7 @@ def get_single_ann_file(filepath_anns, splits):
             anns_split = json.load(fp)
         for key, val in anns_split.items():
             anns[key].extend(val)
-    anns['categories'] = anns['categories'][0]
+    anns['categories'] = anns_split['categories']
     return anns
 
 #############################################

@@ -13,19 +13,15 @@ from random import shuffle
 
 import sys
 sys.path.insert(1, os.path.join(sys.path[0], '/Users/johannesommer/Documents/Universitetet/Kandidat/4. semester/Thesis/Code/'))
-from utils import format_annotation, format_image, get_nearest_panos, get_pano_size, geo_coords_to_streetview_bbox, io2, get_overlap_score
-
-
-# Define dataset
-data_path = '../data'
+from utils.utils import format_annotation, format_image, get_nearest_panos, get_pano_size, geo_coords_to_streetview_bbox, io2, get_overlap_score
 
 # Load panorama images
 zoom = 2
-with open(f'{data_path}/raw/panos_{zoom}.json', 'r') as fp:
+with open(f'../data/raw/panos_{zoom}.json', 'r') as fp:
     panos = json.load(fp)
 
 # Load tree inventory
-trees = pd.read_csv(f'{data_path}/raw/tree_inventory_cleaned.csv')
+trees = pd.read_csv(f'../data/raw/tree_inventory_cleaned.csv')
 trees['geometry'] = trees['geometry'].apply(wkt.loads)
 trees = gpd.GeoDataFrame(trees, geometry='geometry', crs='EPSG:4326')
 
@@ -35,7 +31,7 @@ k = len(set(labels))
 labels_top_k = [x[0] for x in Counter(labels).most_common(k)]
 
 # Map trees, annotations and images
-filenames = os.listdir(f'{data_path}/images/streetview_{zoom}')
+filenames = os.listdir('../data/streetviews')
 mappings = {'pano_to_id': {filename: i for i, filename in enumerate(filenames)},
             'label_to_id': {label: i for i, label in enumerate(labels_top_k)},
             'ann_to_tree': {}}
@@ -205,15 +201,14 @@ for split in splits:
     shuffle(anns_split['annotations'])
 
     # Save annotations
-    ann_path = f'{data_path}/annotations'
-    with open(f'{ann_path}/annotations_{split}.json', 'w') as fp:
+    with open(f'../data/annotations/annotations_{split}.json', 'w') as fp:
         json.dump(anns_split, fp)
 
     # Save version of annotations with only a single label ('tree')
     anns_split['categories'] = [{'id': 0, 'name': 'tree'}]
     for ann in anns_split['annotations']:
         ann['category_id'] = 0
-    with open(f'{ann_path}/annotations_{split}_single_label.json', 'w') as fp:
+    with open(f'../data/annotations/annotations_{split}_single_label.json', 'w') as fp:
         json.dump(anns_split, fp)
 
     # Print statistics
@@ -226,5 +221,5 @@ mappings['pano_to_id'] = {filename: img_id for filename, img_id in mappings['pan
 mappings['ann_to_tree'] = {ann_id: tree_id for ann_id, tree_id in mappings['ann_to_tree'].items() if ann_id in ann_ids_added}
 
 # Save mappings
-with open(f'{data_path}/mappings/mappings.json', 'w') as fp:
+with open(f'../data/mappings/mappings.json', 'w') as fp:
     json.dump(mappings, fp)
